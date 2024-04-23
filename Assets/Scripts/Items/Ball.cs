@@ -22,8 +22,19 @@ public class Ball : ActiveItem
         ChangeRadius(level);
         
         _projection.Setup(_ballSettings.GetProjectionMaterial(level),_levelText.text, Radius);
+
+        if (ScoreManager.Instance.AddScore(ItemType, transform.position, level))
+        {
+            Die();
+        }
     }
-    
+
+    public override void IncreaseLevel()
+    {
+        base.IncreaseLevel();
+        _animator.SetTrigger("LevelUp");
+    }
+
     private void ChangeRadius(int level)
     {
         Radius = Mathf.Lerp(_minRadius, _maxRadius, level / MaxLevel);

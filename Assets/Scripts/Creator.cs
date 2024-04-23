@@ -1,4 +1,6 @@
+using System;
 using System.Collections;
+using TMPro;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -7,14 +9,17 @@ public class Creator : MonoBehaviour
    [SerializeField] private Transform _tube;
    [SerializeField] private Transform _spawner;
    [SerializeField] private ActiveItem[] _activeItemsPrefab; //заменить на массив, чтобы спавнить не только шары
-   [SerializeField] private ActiveItem _ballPrefab; //заменить на массив, чтобы спавнить не только шары
+   [SerializeField] private ActiveItem _ballPrefab; 
 
    [SerializeField] private Transform _rayTransform;
    [SerializeField] private LayerMask _layerMask;
+   [SerializeField] private TextMeshProUGUI _ballsCountText;
 
    private ActiveItem _itemInTube;
    private ActiveItem _itemInSpawner;
-   private int _maxBallLevel = 5; //это будет задаваться из настроек уровня далее (заменить отсюда)
+   private int _maxBallLevel; //это будет задаваться из настроек уровня далее (заменить отсюда)
+   private int _ballsLeftCount;
+   private Coroutine _waiterForLose;
    private Ray _ray;
    private RaycastHit _hit;
 
@@ -22,8 +27,14 @@ public class Creator : MonoBehaviour
 
    private void Start()
    {
+      _ballsLeftCount = Level.Instance.NumberOfBalls;
+      _maxBallLevel = Level.Instance.MaxCreatedBallLevel;
+      UpdateBallsLeftText();
       CreateItemInTube();
       StartCoroutine(MoveToSpawner());
+      
+      GameManager.Instance.OnWin += FinishCreateProcess;
+      GameManager.Instance.OnLose += FinishCreateProcess;
    }
 
    private void Update()
@@ -44,6 +55,11 @@ public class Creator : MonoBehaviour
       }
    }
 
+   private void UpdateBallsLeftText()
+   {
+      _ballsCountText.text = _ballsLeftCount.ToString();
+   }
+
    private void Drop()
    {
       _itemInSpawner.Drop();
@@ -56,10 +72,46 @@ public class Creator : MonoBehaviour
       {
          StartCoroutine(MoveToSpawner());
       }
+      else
+      {
+         _waiterForLose = StartCoroutine(WaitForLose());
+         CollapseManager.Instance.OnCollapsed += ResetLoseTimer;
+      }
+   }
+
+   private void ResetLoseTimer()
+   {
+      if (_waiterForLose != null)
+      {
+         StopCoroutine(_waiterForLose);
+      }
+
+      _waiterForLose = StartCoroutine(WaitForLose());
+   }
+
+   private void FinishCreateProcess()
+   {
+      if (_waiterForLose != null)
+      {
+         StopCoroutine(WaitForLose());
+      }
+
+      enabled = false;
+   }
+
+   private IEnumerator WaitForLose()
+   {
+      yield return new WaitForSecondsRealtime(5f);
+      
+      GameManager.Instance.Lose();
    }
 
    private void CreateItemInTube()
    {
+      if (_ballsLeftCount == 0)
+      {
+         return;
+      }
       _count++;
       
       int level = Random.Range(0, _maxBallLevel);
@@ -75,6 +127,9 @@ public class Creator : MonoBehaviour
          _itemInTube.SetLevel(level);
       }
       _itemInTube.SetToTube();
+      
+      _ballsLeftCount--;
+      UpdateBallsLeftText();
    }
 
    private IEnumerator MoveToSpawner()
@@ -94,5 +149,12 @@ public class Creator : MonoBehaviour
       _itemInTube = null;
       
       CreateItemInTube();
+   }
+
+   private void OnDisable()
+   {
+      CollapseManager.Instance.OnCollapsed -= ResetLoseTimer;
+      GameManager.Instance.OnWin -= FinishCreateProcess;
+      GameManager.Instance.OnLose -= FinishCreateProcess;
    }
 }

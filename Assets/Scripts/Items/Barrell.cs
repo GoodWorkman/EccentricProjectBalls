@@ -15,5 +15,6 @@ public class Barrell : PassiveItem
    {
       Instantiate(_dieEffect, transform.position, Quaternion.Euler(-90f, 0f, 0f));
       Destroy(gameObject);
+      ScoreManager.Instance.AddScore(ItemType, transform.position);
    }
 }

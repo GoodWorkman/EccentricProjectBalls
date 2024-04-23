@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class Spawner : MonoBehaviour
@@ -7,6 +8,12 @@ public class Spawner : MonoBehaviour
 
     private float _xPosition;
     private float _oldMouseX;
+
+    private void Start()
+    {
+        GameManager.Instance.OnWin += DeactivateSpawner;
+        GameManager.Instance.OnLose += DeactivateSpawner;
+    }
 
     private void Update()
     {
@@ -24,5 +31,16 @@ public class Spawner : MonoBehaviour
 
             transform.position = new Vector3(_xPosition, transform.position.y, transform.position.z);
         }
+    }
+
+    private void DeactivateSpawner()
+    {
+        enabled = false;
+    }
+    
+    private void OnDestroy()
+    {
+        GameManager.Instance.OnWin -= DeactivateSpawner;
+        GameManager.Instance.OnLose -= DeactivateSpawner;
     }
 }

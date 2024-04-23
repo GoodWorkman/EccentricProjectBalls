@@ -4,7 +4,8 @@ using UnityEngine;
 
 public class ActiveItem : Item
 {
-    [Header("BaseClass")] [SerializeField] protected TextMeshProUGUI _levelText;
+    [Header("BaseClass")] 
+    [SerializeField] protected TextMeshProUGUI _levelText;
     [SerializeField] protected Projection _projection;
     [SerializeField] protected SphereCollider _collider;
     [SerializeField] protected SphereCollider _trigger;
@@ -50,11 +51,10 @@ public class ActiveItem : Item
     {
     }
 
-    public void IncreaseLevel()
+    public virtual void IncreaseLevel()
     {
         if (Level < _maxLevel)
         {
-            _animator.SetTrigger("LevelUp");
             Level++;
             SetLevel(Level);
         }
